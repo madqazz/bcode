@@ -1,34 +1,37 @@
 package madqteam;
 
 import battlecode.common.*;
-//import static battlecode.common.GameConstants.*;
 
 public class RobotPlayer implements Runnable {
 
-   private final RobotController myRC;
-
-   public RobotPlayer(RobotController rc) {
-      myRC = rc;
+private AbstractRobot player;
+     
+public RobotPlayer(RobotController rc) {
+     switch (rc.getRobotType()) {
+     	  case ARCHON:
+     		  player = new ArchonPlayer(rc);
+     		  break;
+     	  case WORKER:
+     		  player = new WorkerPlayer(rc);   		  
+     		  break;
+     	  case SOLDIER:
+     		  player = new SoldierPlayer(rc);
+     		  break;
+     		  
+         }
+      }
+      
+      public void run() {
+         while(true){
+            try{
+               /*** beginning of main loop ***/
+           	player.run(); 
+               /*** end of main loop ***/
+            }catch(Exception e) {
+               System.out.println("caught exception:");
+               e.printStackTrace();
+            }
+         }
+      }
    }
 
-   public void run() {
-	   
-	   RobotType robot = myRC.getRobotType();
-	   
-	   if (robot == RobotType.ARCHON) 
-	   {
-		  ArchonPlayer archon= new ArchonPlayer(myRC);
-		  archon.run();
-	   }
-
-	   if (robot == RobotType.WORKER)
-	   {
-		   WorkerPlayer worker= new WorkerPlayer(myRC);
-		   worker.run();
-		   
-	   }
-
-    
-
-   }
-}

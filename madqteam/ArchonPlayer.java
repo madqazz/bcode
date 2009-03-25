@@ -1,297 +1,216 @@
 package madqteam;
 
 import battlecode.common.*;
-import java.util.Random;
+import madqteam.AbstractRobot;
+import madqteam.AbstractRobot.RobotState;
+
 
 //import static battlecode.common.GameConstants.*;
 
-public class ArchonPlayer implements Runnable {
+public class ArchonPlayer extends AbstractRobot {
 
    private final RobotController myRC;
-   private MapLocation enemyFlux;
-   private Random generator;
+   private int workers =0;
+   
 
    public ArchonPlayer(RobotController rc) {
+	  super(rc);
       myRC = rc;
+	  state = RobotState.ARCHON_FIND_FLUX;
    }
+    
+    private void findFLux(){   	
+     
+         try{
+ 
+        /*	 
+       	   Robot[] NearbyRobots = myRC.senseNearbyGroundRobots();
+     	   int soldierNumber = 0;
 
-
-    public void randomRun() throws GameActionException{
-
-        MapLocation myFlux=null;
-        Message msg=null;
-
-       for(int i=0;i<35;i++){
-	   try{
-
-                msg = myRC.getNextMessage();
-                if(!(msg==null)&&(msg.strings[0].equals("blablabla"))){
-                     myRC.yield();
-                     waitUntilMovementIdle();
-                     myRC.setDirection(myRC.getDirection().opposite());
-                     myRC.yield();
-                     waitUntilMovementIdle();
-                }
-
-		             if(myRC.isMovementActive()) {
-		                myRC.yield();
-		             } else {
-
-		            	 if(myRC.canMove(myRC.getDirection()))
-		            	 {
-		            		 myRC.moveForward();
-		            	 } else
-		            	 {
-		            		 myRC.setDirection(myRC.getDirection().rotateRight());
-		            	 }
-		            	 myRC.yield();
-		             }
-                     myRC.yield();
-
-            }catch(Exception e) {
-           System.out.println("caught exception:");
-           e.printStackTrace();
-       }
-     /*  if (!(myFlux==null)){
-        goTo(myFlux);
-      }*/
-    }
-   }
-
-  
-   public MapLocation senseFlux() throws GameActionException{
-
-       MapLocation myFlux = null ,deposit = null;
-       int minLen=9999;
-       FluxDeposit[] depos=myRC.senseNearbyFluxDeposits();
-
-		   for (FluxDeposit depo: depos){
-   	   			deposit=myRC.senseFluxDepositInfo(depo).location;
-                    if (minLen < myRC.getLocation().distanceSquaredTo(deposit)){
-                      if (myRC.senseAirRobotAtLocation(deposit) == null) {
-                        minLen = myRC.getLocation().distanceSquaredTo(deposit);
-                        myFlux=deposit;
-                    }
-               }
+     	   for (Robot robot : NearbyRobots){
+    		   if(myRC.canSenseObject(robot)){
+    			   RobotInfo robotInfo = myRC.senseRobotInfo(robot);
+    			   if (robotInfo.team.equals(myRC.getTeam()) && robotInfo.type.equals(RobotType.SOLDIER)){
+    				   soldierNumber++;
+    			   }
+    		   }
+    	   }
+    	   
+           if(soldierNumber < 1){
+        	   spawnSoldier();
+        	   sendMessage(4);
            }
-      return myFlux;
-     }
-	
-
-   
-   public double min (double a, double b)
-   {
-	   if (a < b) 
-	   {
-		return a;   
-	   } else {
-		   return b;
-	   }
-	   
-   } 
-  
-   public void goTo(MapLocation dest){
-
-      boolean onDest = false;
-
-      while(true){
-         try{
-
-            if (myRC.getLocation().directionTo(dest).equals(Direction.OMNI))
-            {
-            	onDest = true;
-                myRC.yield();
-                break;
-            }
-
-
-            while (!(onDest)&&(myRC.isMovementActive()))
-            {
-            	myRC.yield();
-            }
-
-            if (!(onDest)&&(myRC.canMove(myRC.getDirection())))
-       	 	{
-            	 if(myRC.getDirection().equals(myRC.getLocation().directionTo(dest)))
-            	 {
-            		 myRC.moveForward();
-            	 } else
-            	 {
-            		 myRC.setDirection(myRC.getLocation().directionTo(dest));
-            	 }
-       	 	}
-
-             if (!(onDest)&&(!myRC.canMove(myRC.getDirection())))
-             {
-                 if(myRC.getDirection().equals(myRC.senseDirectionToUnownedFluxDeposit()))
-            	 {
-            		 randomRun();
-            	 } else
-            	 {
-            		 myRC.setDirection(myRC.senseDirectionToUnownedFluxDeposit());
-            	 }
-             }
-
-
-            myRC.yield();
-
-
-         }catch(Exception e) {
-            System.out.println("caught exception:");
-            e.printStackTrace();
-         }
-      }
-   }
-
-
-    private void transferEnergon() throws GameActionException {
-		for (Robot robot : myRC.senseNearbyGroundRobots()) {
-			RobotInfo robotInfo = myRC.senseRobotInfo(robot);
-
-			if (robotInfo.team == myRC.getTeam()) {
-				MapLocation robotLoc = robotInfo.location;
-
-				if ((myRC.getLocation().isAdjacentTo(robotLoc))&&(3*robotInfo.maxEnergon > 4*robotInfo.energonLevel))
-					myRC.transferEnergon(min(robotInfo.maxEnergon-robotInfo.energonLevel, myRC.getEnergonLevel()/2), robotLoc, RobotLevel.ON_GROUND);
-			}
-		}
-	}
-
-
-    private void findFLux(){
-
-	   boolean onflux = false;
-	   Robot NearbyRobots[];
-	   int workers =0;
-
-
-      while(true){
-         try{
+    	   transferEnergon();
+        	*/
+        	 
 
             if (myRC.senseDirectionToUnownedFluxDeposit().equals(Direction.OMNI))
             {
-            	onflux = true;
-                myRC.yield();
+            	state = RobotState.ARCHON_ON_FLUX;
+        //    	sendMessage(2);
+                return;
             }
+            
+        	if (checkEnemy()){
+    			state=RobotState.ARCHON_ATTACK;
+    			return;
+        	}
+            
 
-            while (!(onflux)&&(myRC.isMovementActive()))
+
+            while (myRC.isMovementActive())
             {
             	myRC.yield();
             }
 
-            if (onflux)
-            {
-                if (workers < 5){
-                    if (workers ==4){
-                        myRC.yield();
-                        myRC.setDirection(myRC.getDirection().opposite());
-                        myRC.yield();
-                        spawnBob();
-                        workers++;
-                        sendMessage(0);
-                    }else{
-                        spawn();
-                        workers++;
-                        sendMessage(0);
-                    }
-                }else{
-                    NearbyRobots = myRC.senseNearbyGroundRobots();
-                    if(NearbyRobots.length <4){
-                        spawn();
-                        sendMessage(0);
-                    }
-                }
-                transferEnergon();
-                myRC.yield();
-            }
 
-            if (!(onflux)&&(myRC.canMove(myRC.getDirection())))
+            if (myRC.canMove(myRC.getDirection()))
        	 	{
             	 if(myRC.getDirection().equals(myRC.senseDirectionToUnownedFluxDeposit()))
             	 {
+            		 waitUntilMovementIdle();
             		 myRC.moveForward();
+            		 myRC.yield();
             	 } else
             	 {
-            		 myRC.setDirection(myRC.senseDirectionToUnownedFluxDeposit());
+            		 waitUntilMovementIdle();
+            		 if(!myRC.senseDirectionToUnownedFluxDeposit().equals(Direction.OMNI) && !myRC.senseDirectionToUnownedFluxDeposit().equals(Direction.NONE)){
+            			 myRC.setDirection(myRC.senseDirectionToUnownedFluxDeposit());
+            			 myRC.yield();
+            		 }
             	 }
        	 	}
 
-             if (!(onflux)&&(!myRC.canMove(myRC.getDirection())))
-             {
+             if (!myRC.canMove(myRC.getDirection())){
                  if(myRC.getDirection().equals(myRC.senseDirectionToUnownedFluxDeposit()))
             	 {
-
-                     	FluxDeposit[] fluxs = myRC.senseNearbyFluxDeposits();
-                        enemyFlux=null;
-
-                    	//for (FluxDeposit deposit : fluxs) {
-
-                          //  MapLocation loc = myRC.senseFluxDepositInfo(deposit).location;
-
-                          //  if(myRC.getLocation().isAdjacentTo(loc)){
-
-                                for (Robot robot : myRC.senseNearbyGroundRobots()) {
-                                     RobotInfo robotInfo = myRC.senseRobotInfo(robot);
-                                     if (!robotInfo.team.equals(myRC.getTeam())&&(robotInfo.location.isAdjacentTo(myRC.getLocation())))  {
-
-                                		sabotage();
-
-                                     }
-
-                            //   }
-                           // }
-                        }
-            		 randomRun();
+            		 randomRun(15);
+                	 //myRC.yield();
             	 } else
             	 {
-            		 myRC.setDirection(myRC.senseDirectionToUnownedFluxDeposit());
+            		 waitUntilMovementIdle();
+            		 if(!myRC.senseDirectionToUnownedFluxDeposit().equals(Direction.OMNI) && !myRC.senseDirectionToUnownedFluxDeposit().equals(Direction.NONE)){
+            			 myRC.setDirection(myRC.senseDirectionToUnownedFluxDeposit());
+            			 myRC.yield();
+            		 }
+            	 }
+            	 if(!myRC.getDirection().equals(myRC.senseDirectionToUnownedFluxDeposit())){
+            		 waitUntilMovementIdle();
+            		 if(!myRC.senseDirectionToUnownedFluxDeposit().equals(Direction.OMNI) && !myRC.senseDirectionToUnownedFluxDeposit().equals(Direction.NONE)){
+            			 myRC.setDirection(myRC.senseDirectionToUnownedFluxDeposit());
+            			 myRC.yield();
+            		 }
             	 }
              }
 
 
             myRC.yield();
 
-            /*** end of main loop ***/
          }catch(Exception e) {
             System.out.println("caught exception:");
             e.printStackTrace();
          }
       }
+   
+    
+    protected void onFlux() throws GameActionException{
+
+    	Robot[] NearbyRobots;
+    	Message msg = myRC.getNextMessage();
+
+    	
+    	if (!(msg==null)){
+    		if (msg.strings[0]=="ARCHON_TO_DEFENSE"){
+    			state=RobotState.ARCHON_DEFENSE;
+    			return;
+    		}
+    	  	if (msg.strings[0] == "ENEMY_SPOTTED"){
+    	   		state=RobotState.ARCHON_DEFENSE;
+        		return;
+    	  	  }
+    	}
+    	
+    	if (checkEnemy()){
+			state=RobotState.ARCHON_DEFENSE;
+			return;
+    	}
+    	
+    	if (workers < 6){
+                    spawn();
+                    workers++;
+            }else{
+                NearbyRobots = myRC.senseNearbyGroundRobots();
+                if(NearbyRobots.length <5){
+                    spawn();
+                }
+            }
+            transferEnergon();
+            myRC.yield();
+        }
+ 
+    
+    
+   private void attack() throws GameActionException{
+ 	       Robot[] nearbyRobots = myRC.senseNearbyGroundRobots();
+		   int soldierNumber = 0;
+		   
+		   if(!checkEnemy() && generator.nextInt(15)==1){
+			   sendMessage(0);
+			   state=RobotState.ARCHON_FIND_FLUX;
+			   return;
+		   }else{
+			   if (generator.nextInt(50)==1){
+				   sendMessage(2);
+			   }
+		   }
+		   transferEnergon();  
+
+		   for (Robot robot : nearbyRobots){
+			   if(myRC.canSenseObject(robot)){
+				   RobotInfo robotInfo = myRC.senseRobotInfo(robot);
+				   if (robotInfo.team.equals(myRC.getTeam()) && robotInfo.type.equals(RobotType.SOLDIER)){
+					   soldierNumber++;
+				   }
+			   }
+		   }
+		   
+	       if(soldierNumber < 3){
+	    	   spawnSoldier();
+	       }
+		   transferEnergon();
+      }
+   
+
+   
+   private void defense() throws GameActionException{
+	   Robot[] NearbyRobots = myRC.senseNearbyGroundRobots();
+	   int soldierNumber = 0;	   
+	   if(!checkEnemy() && generator.nextInt(15)==1){
+		   sendMessage(0);
+		   state=RobotState.ARCHON_ON_FLUX;
+		   return;
+	   }else{
+		   if (generator.nextInt(150)==1){
+			   sendMessage(1);
+		   }
+	   }
+	   transferEnergon();  
+
+	   for (Robot robot : NearbyRobots){
+		   if(myRC.canSenseObject(robot)){
+			   RobotInfo robotInfo = myRC.senseRobotInfo(robot);
+			   if (robotInfo.team.equals(myRC.getTeam()) && robotInfo.type.equals(RobotType.SOLDIER)){
+				   soldierNumber++;
+			   }
+		   }
+	   }
+	   
+       if(soldierNumber < 3){
+    	   spawnSoldier();
+       }
+	   transferEnergon();  
    }
 
-     private void waitUntilMovementIdle(){
-          while(myRC.getRoundsUntilMovementIdle() > 0){
-                     myRC.yield();
-        }
- }
-
-    private void sendMessage(int i) throws GameActionException{
-        Message msgout;
-    	msgout = new Message();
-        String[] msg = new String[5];
-        switch(i){
-            case 0:
-                msg[0]="0";
-                break;
-            case 1:
-                msg[0]="1";
-                break;
-            case 2:
-                msg[0]="2";
-                break;
-            case 3:
-                msg[0]="3";
-                break;
-            case 10:
-                msg[0]="blablabla";
-                break;
-
-        }
-	       		 msgout.strings = msg;
-	           	 myRC.broadcast(msgout);
-	           	 myRC.yield();
-
-    }
 
 
 	private void spawn() throws GameActionException {
@@ -299,85 +218,108 @@ public class ArchonPlayer implements Runnable {
 		for (Direction dir : Direction.values()) {
 			if (!dir.equals(Direction.OMNI) && !dir.equals(Direction.NONE)) {
 				MapLocation loc = myRC.getLocation().add(dir);
+				TerrainTile terrain = myRC.senseTerrainTile(loc);
 
-                if (myRC.senseGroundRobotAtLocation(loc) == null && myRC.getEnergonLevel() > RobotType.WORKER.spawnCost()) {
+                if (myRC.senseGroundRobotAtLocation(loc) == null 
+                		&& myRC.getEnergonLevel() > RobotType.WORKER.spawnCost()
+                		&& !myRC.senseTerrainTile(loc).getType().equals(TerrainTile.TerrainType.OFF_MAP)
+                		&& terrain.isTraversableAtHeight(RobotLevel.ON_GROUND)) {
+                	
                     if(!myRC.getDirection().equals(dir)){
                         waitUntilMovementIdle();
                         myRC.setDirection(dir);
                         myRC.yield();
                     }
                     waitUntilMovementIdle();
+                    if (myRC.senseGroundRobotAtLocation(loc) == null && myRC.getEnergonLevel() > RobotType.WORKER.spawnCost() ) {
                     myRC.spawn(RobotType.WORKER);
                     myRC.yield();
                     break;
+                    }
 			}
 		}
 	}
 }
+	
+/*	
+	private void buildSoldiers(int number) throws GameActionException{
+		int i=0;
+		while(i<number){
+			/*if (spawnSoldier()){
+				i++;
+			}		
+			waitUntilMovementIdle();
+			transferEnergon();
+		}
+	}
+	*/
+	
+	private boolean spawnSoldier() throws GameActionException {
 
-    	private void spawnBob() throws GameActionException {
+		boolean done=false;
+		while(!done){
+		for (Direction dir : Direction.values()) {
+			if (!dir.equals(Direction.OMNI) && !dir.equals(Direction.NONE)) {
+				MapLocation loc = myRC.getLocation().add(dir);
+				TerrainTile terrain = myRC.senseTerrainTile(loc);
 
-		while(true) {
-                if (myRC.senseGroundRobotAtLocation(myRC.getLocation().add(myRC.getDirection())) == null && myRC.getEnergonLevel() > RobotType.WORKER.spawnCost()) {
-                    waitUntilMovementIdle();
-                    myRC.spawn(RobotType.WORKER);
-                    myRC.yield();
-                    break;
-                }else{
-                    myRC.setDirection(myRC.getDirection().rotateLeft());
-                    myRC.yield();
-
-                }
-       }
-}
-
-
-    private void sabotage(){
-     int workers =0;
-     while(true){
-         try{
-
-             
-                if (workers == 0){
-                        spawn();
-                        workers++;
+                if (myRC.senseGroundRobotAtLocation(loc) == null 
+                		&& myRC.getEnergonLevel() > RobotType.SOLDIER.spawnCost()
+                		&& !myRC.senseTerrainTile(loc).getType().equals(TerrainTile.TerrainType.OFF_MAP) 
+                		&& terrain.isTraversableAtHeight(RobotLevel.ON_GROUND)) {
+                	
+                    if(!myRC.getDirection().equals(dir)){
+                        waitUntilMovementIdle();
+                        myRC.setDirection(dir);
                         myRC.yield();
-                        sendMessage(3);
-                }
-
-                if (workers <3 ){
-                        spawn();
-                        workers++;
-                        sendMessage(2);
-
-                }else{
-                    Robot[] NearbyRobots = myRC.senseNearbyGroundRobots();
-                    if(NearbyRobots.length <5){
-                        spawn();
-                        sendMessage(2);
+                    }
+                    waitUntilMovementIdle();
+                    if (myRC.senseGroundRobotAtLocation(loc) == null && myRC.getEnergonLevel() > RobotType.SOLDIER.spawnCost()) {
+                    	myRC.spawn(RobotType.SOLDIER);
+                    	done=true;
+                    	myRC.yield();
+                    	break;
                     }
                 }
-
-                transferEnergon();
-                if(generator.nextInt(100)==0){
-                    sendMessage(10);
-                }
-
-         }catch(Exception e) {
-           System.out.println("caught exception:");
-           e.printStackTrace();
-       }
-     }
- }
+			}
+		}
+		}
+		return done;
+}
+	
 
 
    public void run() {
-
-      generator = new Random();
-	  findFLux();
-      while(true){
-        myRC.yield();
-      }
-      }
-
+	   switch (state) {
+	   		case ARCHON_FIND_FLUX:
+				   	findFLux();
+				   	break;
+	   		case ARCHON_ON_FLUX:
+	   				try {
+	   					onFlux();
+	   				} catch (GameActionException e) {
+	   					e.printStackTrace();
+	   				}
+	   				break;
+	   		case ARCHON_ATTACK:
+	   				try {
+	   					attack();
+	   				} catch (GameActionException e) {
+	   					e.printStackTrace();
+	   				}
+	   				break;
+	   		case ARCHON_DEFENSE:
+	   				try {
+	   					defense();
+	   				} catch (GameActionException e) {
+	   					e.printStackTrace();
+	   				}
+	   				break;
+	   			
+	   		
+				   
+	   }
+	
+   }
 }
+
