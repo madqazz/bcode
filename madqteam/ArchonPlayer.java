@@ -84,7 +84,7 @@ public class ArchonPlayer extends AbstractRobot {
              if (!myRC.canMove(myRC.getDirection())){
                  if(myRC.getDirection().equals(myRC.senseDirectionToUnownedFluxDeposit()))
             	 {
-            		 randomRun(15);
+            		 randomRun(50);
                 	 //myRC.yield();
             	 } else
             	 {
@@ -119,8 +119,8 @@ public class ArchonPlayer extends AbstractRobot {
     	Message msg = myRC.getNextMessage();
     	int workerNumber = 0, soldierNumber = 0;
 
-    	
-    	if (!(msg==null)){
+   	
+    	if (!(msg==null) && !(msg.strings==null)){
     		if (msg.strings[0]=="ARCHON_TO_DEFENSE"){
     			state=RobotState.ARCHON_DEFENSE;
     			return;

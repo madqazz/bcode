@@ -53,7 +53,7 @@ public class SoldierPlayer extends AbstractRobot {
  protected void follow() throws GameActionException{
 	  MapLocation archon = followArchon();
 	  Message msg=myRC.getNextMessage();
-	  if (!(msg==null)){
+	  if (!(msg==null) && !(msg.strings==null)){
 		  if (msg.strings[0] == "MQ_ATTACK"){
 			  state = RobotState.SOLDIER_ATTACK;
 			  return;
@@ -86,7 +86,7 @@ public class SoldierPlayer extends AbstractRobot {
 	  waitUntilAttackIdle();
 	  Message msg=myRC.getNextMessage();
 	  MapLocation nearestEnemyLoc = null;
-	  if (!(msg==null)){
+	  if (!(msg==null) && !(msg.strings==null)){
 		  if (msg.strings[0] == "MQ_ATTACK"){
 			  state = RobotState.SOLDIER_ATTACK;
 			  return;
@@ -187,7 +187,7 @@ public class SoldierPlayer extends AbstractRobot {
 	  
 	  	  Message msg=myRC.getNextMessage();
 	  
-	  	  if (!(msg==null)){
+	  	  if (!(msg==null) && !(msg.strings==null)){
 	  		  if (msg.strings[0] == "MQ_DEFENSE"){
 	  			  state = RobotState.SOLDIER_DEFENSE;
 	  			  return;

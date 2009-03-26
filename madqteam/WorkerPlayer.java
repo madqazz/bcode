@@ -32,7 +32,7 @@ public class WorkerPlayer extends AbstractRobot {
     
 	Message msg=myRC.getNextMessage();
 	  
-  	if (!(msg==null)){
+  	if (!(msg==null) && (msg.strings==null)){
   		if (msg.strings[0] == "ENEMY_SPOTTED"){
   			  sendMessage(4);
   		  }
@@ -126,7 +126,7 @@ public class WorkerPlayer extends AbstractRobot {
 	    
 	Message msg=myRC.getNextMessage();
 		  
-	if (!(msg==null)){
+	if (!(msg==null) && !(msg.strings[0]==null)){
 		if (msg.strings[0] == "ENEMY_SPOTTED"){
 			  sendMessage(4);
 		  }
@@ -143,6 +143,10 @@ public class WorkerPlayer extends AbstractRobot {
     	    blocks = myRC.senseNearbyBlocks();
     	    check = true;
     	   }
+    	   
+           if(myRC.getNumBlocks() > 0){
+               break;
+           }
 
     	   for(MapLocation block : blocks){
    				 if (!(block.equals(myFlux))&&(!(block.isAdjacentTo(myFlux)))&&(!(block.equals(myRC.getLocation())))){
