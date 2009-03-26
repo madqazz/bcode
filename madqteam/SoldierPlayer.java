@@ -4,6 +4,7 @@ package madqteam;
 import battlecode.common.*;
 import madqteam.AbstractRobot;
 //import madqteam.AbstractRobot.RobotState;
+import madqteam.AbstractRobot.RobotState;
 
 
 public class SoldierPlayer extends AbstractRobot {
@@ -13,7 +14,7 @@ public class SoldierPlayer extends AbstractRobot {
  public SoldierPlayer(RobotController rc) {
 	 super(rc);
      myRC = rc;
-     state = RobotState.SOLDIER_DEFENSE;
+     state = RobotState.SOLDIER_FOLLOW;
  }
  
  
@@ -53,19 +54,29 @@ public class SoldierPlayer extends AbstractRobot {
 	  MapLocation archon = followArchon();
 	  Message msg=myRC.getNextMessage();
 	  if (!(msg==null)){
-		  if (msg.strings[0] == "ATTACK"){
+		  if (msg.strings[0] == "MQ_ATTACK"){
 			  state = RobotState.SOLDIER_ATTACK;
 			  return;
 		  }
-		  if (msg.strings[0] == "DEFENSE"){
+		  if (msg.strings[0] == "MQ_DEFENSE"){
+			  goNear(archon);
 			  state = RobotState.SOLDIER_DEFENSE;
 			  return;
 		  }
+	/*	  if (msg.strings[0] == "MQ_PATROL"){
+			  state = RobotState.SOLDIER_PATROL;
+			  return;
+		  }*/
 	  }
+  	  if (checkEnemy()){
+		  goNear(archon);
+		  state = RobotState.SOLDIER_DEFENSE;
+		return;
+  	  }
+	
 	  if (!(archon == null)){
-		  goDirection(myRC.getLocation().directionTo(archon));		  
-	  }else{
-		  randomRun(3);
+		  randomRun(7);
+		  goNear(archon);		  
 	  }
 	 
  }
@@ -76,15 +87,19 @@ public class SoldierPlayer extends AbstractRobot {
 	  Message msg=myRC.getNextMessage();
 	  MapLocation nearestEnemyLoc = null;
 	  if (!(msg==null)){
-		  if (msg.strings[0] == "ATTACK"){
+		  if (msg.strings[0] == "MQ_ATTACK"){
 			  state = RobotState.SOLDIER_ATTACK;
 			  return;
 		  }
 	//	  if (msg.strings[0] == "WORK"){
 	//	  	 myRC.suicide();
 	//	  }
-		  if (msg.strings[0] == "DEFENSE"){
+		  if (msg.strings[0] == "MQ_DEFENSE"){
   			  nearestEnemyLoc = msg.locations[0];
+		  }
+		  if (msg.strings[0] == "MQ_PATROL"){
+			  state = RobotState.SOLDIER_PATROL;
+			  return;
 		  }
 	  }
 	  myRC.yield();	  
@@ -111,6 +126,35 @@ public class SoldierPlayer extends AbstractRobot {
 	  
 	  transferEnergon();  
   }
+  
+/*  
+  protected void patrol() throws GameActionException{
+	  waitUntilAttackIdle();
+	  Message msg=myRC.getNextMessage();
+	  MapLocation nearestEnemyLoc = null;
+	  if (!(msg==null)){
+		  if (msg.strings[0] == "MQ_ATTACK"){
+			  state = RobotState.SOLDIER_ATTACK;
+			  return;
+		  }
+		  if (msg.strings[0] == "MQ_DEFENSE"){
+			  state = RobotState.SOLDIER_DEFENSE;
+			  return;
+		  }
+		  if (msg.strings[0] == "MQ_FOLLOW"){
+			  state = RobotState.SOLDIER_FOLLOW;
+			  return;
+		  }
+		  if (!(archon == null)){
+			  goDirection(myRC.getLocation().directionTo(archon));		  
+		  }else{
+			  randomRun(3);
+		  }
+
+	  
+	  transferEnergon();  
+  }
+  */
   
   
   protected void fight() throws GameActionException{
@@ -144,14 +188,18 @@ public class SoldierPlayer extends AbstractRobot {
 	  	  Message msg=myRC.getNextMessage();
 	  
 	  	  if (!(msg==null)){
-	  		  if (msg.strings[0] == "DEFENSE"){
+	  		  if (msg.strings[0] == "MQ_DEFENSE"){
 	  			  state = RobotState.SOLDIER_DEFENSE;
 	  			  return;
 	  		  }
-	  		  if (msg.strings[0] == "ATTACK"){
+	  		  if (msg.strings[0] == "MQ_PATROL"){
+	  			  state = RobotState.SOLDIER_PATROL;
+	  			  return;
+	  		  }
+	  		  if (msg.strings[0] == "MQ_ATTACK"){
 	  			  nearestEnemyLoc = msg.locations[0];
 	  		  }
-	  		  if (msg.strings[0] == "NEED_HELP"){
+	  		  if (msg.strings[0] == "MQ_NEED_HELP"){
 	  			  nearestEnemyLoc = msg.locations[0];
 	  		  }
 	  	  }
@@ -197,15 +245,23 @@ public class SoldierPlayer extends AbstractRobot {
   					e.printStackTrace();
   				}
   				myRC.yield();
-  				break; 		
-  /*		case SOLDIER_FOLLOW:
+  				break; 
+  /*		case SOLDIER_PATROL:
+				try {
+					patrol();
+				} catch (GameActionException e) {
+					e.printStackTrace();
+				}
+				myRC.yield();
+				break;*/
+  		case SOLDIER_FOLLOW:
 				try {
 					follow();
 				} catch (GameActionException e) {
 					e.printStackTrace();
 				}
 				myRC.yield();
-				break;*/
+				break;
 	   }
   }
 }

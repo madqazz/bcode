@@ -15,6 +15,7 @@ public abstract class AbstractRobot {
 		SOLDIER_FOLLOW,
 		SOLDIER_DEFENSE,
 		SOLDIER_ATTACK,
+		SOLDIER_PATROL,
 	};
 	protected RobotState state;
 	protected Random generator;
@@ -47,6 +48,25 @@ public abstract class AbstractRobot {
 	     }
 	     }  
 	 }
+	 
+	 public MapLocation findFlux() throws GameActionException {
+		 
+			FluxDeposit[] fluxs = myRC.senseNearbyFluxDeposits();
+			int minLen = 9999;
+			MapLocation myFLux = null;
+
+			for (FluxDeposit deposit : fluxs) {
+				MapLocation loc = myRC.senseFluxDepositInfo(deposit).location;
+				int dist = myRC.getLocation().distanceSquaredTo(loc);
+
+				if (dist < minLen) {
+					minLen = dist;
+					myFLux = loc;
+				}
+			}
+		 return myFLux;
+	 }
+	 
 	 
 	 protected void goTo(MapLocation dest){
 
@@ -132,22 +152,25 @@ public abstract class AbstractRobot {
 	        msgout.locations = new MapLocation[1];
 	        switch(i){
 	            case 0:
-	            	msgout.strings[0]="WORK";
+	            	msgout.strings[0]="MQ_WORK";
 	                break;
 	            case 1:
-	                msgout.strings[0]="DEFENSE";
+	                msgout.strings[0]="MQ_DEFENSE";
 	                msgout.locations[0] = enemyLocation();
 	                break;
 	            case 2:
-	            	msgout.strings[0]="ATTACK";
+	            	msgout.strings[0]="MQ_ATTACK";
 	                msgout.locations[0] = enemyLocation();
 	                break;
 	            case 3:
-	            	msgout.strings[0]="NEED_HELP";
+	            	msgout.strings[0]="MQ_NEED_HELP";
 	                msgout.locations[0] = myRC.getLocation();
 	                break;
 	            case 4:
-	            	msgout.strings[0]="FOLLOW";
+	            	msgout.strings[0]="MQ_FOLLOW";
+	            	break;
+	            case 5:
+	            	msgout.strings[0]="MQ_PATROL";
 	            	break;
 	        }
 		           	 myRC.broadcast(msgout);
@@ -253,7 +276,7 @@ public abstract class AbstractRobot {
 					MapLocation robotLoc = robotInfo.location;
 
 					if ((myRC.getLocation().isAdjacentTo(robotLoc))&&(3*robotInfo.maxEnergon > 4*robotInfo.energonLevel) && !(myRC.senseGroundRobotAtLocation(robotLoc).equals(null))){
-						myRC.transferEnergon(min(robotInfo.maxEnergon-robotInfo.eventualEnergon, myRC.getEnergonLevel()/2), robotLoc, RobotLevel.ON_GROUND);
+						myRC.transferEnergon(Math.max(Math.min(robotInfo.maxEnergon-robotInfo.eventualEnergon, myRC.getEnergonLevel()/2),0), robotLoc, RobotLevel.ON_GROUND);
 						myRC.yield();
 						break;
 					}

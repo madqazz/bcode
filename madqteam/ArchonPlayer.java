@@ -117,6 +117,7 @@ public class ArchonPlayer extends AbstractRobot {
 
     	Robot[] NearbyRobots;
     	Message msg = myRC.getNextMessage();
+    	int workerNumber = 0, soldierNumber = 0;
 
     	
     	if (!(msg==null)){
@@ -135,17 +136,30 @@ public class ArchonPlayer extends AbstractRobot {
 			return;
     	}
     	
-    	if (workers < 6){
-                    spawn();
-                    workers++;
-            }else{
-                NearbyRobots = myRC.senseNearbyGroundRobots();
-                if(NearbyRobots.length <5){
-                    spawn();
-                }
-            }
-            transferEnergon();
-            myRC.yield();
+        NearbyRobots = myRC.senseNearbyGroundRobots();
+  	    for (Robot robot : NearbyRobots){
+    	   if(myRC.canSenseObject(robot)){
+    		   RobotInfo robotInfo = myRC.senseRobotInfo(robot);
+    			   if (robotInfo.team.equals(myRC.getTeam()) && robotInfo.type.equals(RobotType.SOLDIER)){
+    				   soldierNumber++;
+    			   }
+    			   if (robotInfo.team.equals(myRC.getTeam()) && robotInfo.type.equals(RobotType.WORKER)){
+    				   workerNumber++;
+    			   }
+    		   }
+    	   }
+	     if(soldierNumber < 3){
+	    	   spawnSoldier();
+	    	   transferEnergon();
+	    	   sendMessage(4);
+	     }
+	     
+		 transferEnergon();
+	     if(workerNumber < 5){
+	       spawn();
+	       transferEnergon();
+	      }
+		  transferEnergon();
         }
  
     
@@ -176,6 +190,7 @@ public class ArchonPlayer extends AbstractRobot {
 		   
 	       if(soldierNumber < 3){
 	    	   spawnSoldier();
+	    	   transferEnergon();
 	       }
 		   transferEnergon();
       }

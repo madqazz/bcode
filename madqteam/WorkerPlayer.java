@@ -18,27 +18,6 @@ public class WorkerPlayer extends AbstractRobot {
     myRC = rc;
  }
  
-
- 
- public MapLocation findFlux() throws GameActionException {
- 
-		FluxDeposit[] fluxs = myRC.senseNearbyFluxDeposits();
-		int minLen = 9999;
-		MapLocation myFLux = null;
-
-		for (FluxDeposit deposit : fluxs) {
-			MapLocation loc = myRC.senseFluxDepositInfo(deposit).location;
-			int dist = myRC.getLocation().distanceSquaredTo(loc);
-
-			if (dist < minLen) {
-				minLen = dist;
-				myFLux = loc;
-			}
-		}
-	 return myFLux;
- }
- 
-
  
  public void unloadBlock() throws GameActionException{
      MapLocation blockdest = myFlux;
