@@ -287,11 +287,17 @@ public class SoldierPlayer extends AbstractRobot {
 	     	
 		  Message msg=myRC.getNextMessage();
 			  
-		  if (!(msg==null)){
-			  if (msg.strings[0] == "MQ_ATTACK"){
+		  if (!(msg==null) && !(msg.strings==null) && msg.strings.length == 2){
+			  if (msg.strings[1] == "MQ_ATTACK"){
 				  state = RobotState.SOLDIER_ATTACK;
 				  return;
 			  }
+			  if (!ourMessage(msg)){
+				  sendMessage(3);
+				  state = RobotState.SOLDIER_ATTACK;
+				  return;
+			  }
+
 		  }
 	     		     
 
