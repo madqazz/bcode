@@ -266,9 +266,9 @@ public class SoldierPlayer extends AbstractRobot {
   }
   
   
-  private void findFLux(){   	
+  protected void goToFlux() throws GameActionException{   	
 
-       try{
+
       	
           if (myRC.senseDirectionToUnownedFluxDeposit().equals(Direction.NONE))
           {
@@ -344,12 +344,6 @@ public class SoldierPlayer extends AbstractRobot {
           		 }
           	 }
            }
-
-
-       }catch(Exception e) {
-          System.out.println("caught exception:");
-          e.printStackTrace();
-       }
     }
   
   
@@ -384,9 +378,10 @@ public class SoldierPlayer extends AbstractRobot {
 				break;*/
   		case SOLDIER_FIND_FLUX:
 			try {
-				findFlux();
-			} catch (GameActionException e) {
-				e.printStackTrace();
+				goToFlux();
+			} catch (GameActionException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
 			}
   		case SOLDIER_FOLLOW:
 				try {
