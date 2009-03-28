@@ -2,7 +2,7 @@ package madqteam;
 
 import battlecode.common.*;
 import madqteam.AbstractRobot;
-//import madqteam.AbstractRobot.RobotState;
+import madqteam.AbstractRobot.RobotState;
 
 
 
@@ -12,6 +12,7 @@ public class WorkerPlayer extends AbstractRobot {
     private MapLocation myFlux=null;
     private MapLocation myLoc=null;
     private MapLocation myLocNext=null;
+    private MapLocation myLocNext2=null;
 
  public WorkerPlayer(RobotController rc) {
 	 super(rc);
@@ -20,28 +21,18 @@ public class WorkerPlayer extends AbstractRobot {
  
  
  public void unloadBlock() throws GameActionException{
-     MapLocation blockdest = myFlux;
 
      goTo(myLocNext);
-     goTo(myLoc);
-     
-     
- 	if (checkEnemy()){
- 		sendMessage(4);
- 	}
-    
-	Message msg=myRC.getNextMessage();
-	  
-  	if (!(msg==null) && (msg.strings==null)){
-  		if (msg.strings[0] == "ENEMY_SPOTTED"){
-  			  sendMessage(4);
-  		  }
-  	}
-     
-     
+     goTo(myLoc);         
 
 	 while(true){
 		 try{
+			 
+	       	 Message msg=myRC.getNextMessage();
+	 		  
+	       	 if (!(msg==null) && !ourMessage(msg) || checkEnemy()){
+	       			sendMessage(3);
+	       	 }
 
              if(myRC.getNumBlocks()==0){
                  break;
@@ -49,8 +40,8 @@ public class WorkerPlayer extends AbstractRobot {
 
               waitUntilMovementIdle();
 
-              if(!myRC.getDirection().equals(myRC.getLocation().directionTo(blockdest))){
-                     myRC.setDirection(myRC.getLocation().directionTo(blockdest));
+              if(!myRC.getDirection().equals(myRC.getLocation().directionTo(myFlux)) && !myRC.getLocation().directionTo(myFlux).equals(Direction.OMNI)){
+                     myRC.setDirection(myRC.getLocation().directionTo(myFlux));
                      myRC.yield();
               }
 
@@ -65,7 +56,7 @@ public class WorkerPlayer extends AbstractRobot {
                      if(myRC.getLocation().equals(myLoc)){
                          goTo(myLocNext);
                          waitUntilMovementIdle();
-                         myRC.setDirection(myRC.getLocation().directionTo(myLoc).opposite());
+                         myRC.setDirection(myRC.getLocation().directionTo(myLoc));
                          myRC.yield();
                          if (myRC.canUnloadBlockToLocation(myLoc)){
                             myRC.unloadBlockToLocation(myLoc);
@@ -85,8 +76,10 @@ public class WorkerPlayer extends AbstractRobot {
                         }
                       }
 
-                     myRC.setDirection(myRC.getLocation().directionTo(myFlux).opposite());
-                     myRC.yield();
+                     if (!myRC.getLocation().directionTo(myFlux).opposite().equals(Direction.OMNI)){
+                    	 myRC.setDirection(myRC.getLocation().directionTo(myFlux).opposite());
+                    	 myRC.yield();
+                     }
 
                     waitUntilMovementIdle();
 
@@ -101,7 +94,6 @@ public class WorkerPlayer extends AbstractRobot {
                     myRC.yield();
 
                     waitUntilMovementIdle();
-
                }
                transferEnergon();
 
@@ -120,24 +112,18 @@ public class WorkerPlayer extends AbstractRobot {
 	 boolean check = false;
 	 int maxLen=-9999;
 	 
-	if (checkEnemy()){
-		sendMessage(4);
-	}
-	    
-	Message msg=myRC.getNextMessage();
-		  
-	if (!(msg==null) && !(msg.strings[0]==null)){
-		if (msg.strings[0] == "ENEMY_SPOTTED"){
-			  sendMessage(4);
-		  }
-	}
-	 
 
     while(true){
        try{
+    	   
+       	   Message msg=myRC.getNextMessage();
+		  
+       	   if (!(msg==null) && !ourMessage(msg) || checkEnemy()){
+       			sendMessage(3);
+       	   }
 
-           	waitUntilMovementIdle();
-
+           waitUntilMovementIdle();
+           	
     	   if (!check)
     	   {
     	    blocks = myRC.senseNearbyBlocks();
@@ -227,8 +213,10 @@ public class WorkerPlayer extends AbstractRobot {
         }
     }
 
+
     while(true){
        try{
+ //   	   updateStatus();
             blockLoad();
             transferEnergon();
             unloadBlock();

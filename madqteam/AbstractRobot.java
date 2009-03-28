@@ -9,6 +9,7 @@ public abstract class AbstractRobot {
 	protected enum RobotState { 
 		ARCHON_START,
 		ARCHON_FIND_FLUX, 
+		ARCHON_TAKE_FLUX,
 		ARCHON_ON_FLUX, 
 		ARCHON_DEFENSE,
 		ARCHON_ATTACK,
@@ -16,6 +17,8 @@ public abstract class AbstractRobot {
 		SOLDIER_DEFENSE,
 		SOLDIER_ATTACK,
 		SOLDIER_PATROL,
+		SOLDIER_BEGIN,
+		SOLDIER_FIND_FLUX,
 	};
 	protected RobotState state;
 	protected Random generator;
@@ -25,9 +28,96 @@ public abstract class AbstractRobot {
 		generator = new Random();
 	}
 	
+	protected void updateStatus() {
+		//myRC.setIndicatorString(1, Integer.toString(69));
+		myRC.setIndicatorString(2, state.name());
+	}
+	
 	abstract public void run() throws GameActionException; 
 	
 	 protected void randomRun(int rounds){
+	     for(int i=0;i<rounds;i++){
+		   try{
+	        		/*if (checkEnemy() && myRC.getRobotType().equals(RobotType.ARCHON)){
+	        			return;
+	        		}*/
+			   
+		             if(myRC.isMovementActive()) {
+		                myRC.yield();
+		             } else {		            	 
+		            	 if(myRC.canMove(myRC.getDirection()) && !(generator.nextInt(20)==1))
+		            	 {
+		            		 myRC.moveForward();
+		            	 } else 
+		            	 {
+		            		 myRC.setDirection(myRC.getDirection().rotateRight());
+		            	 }
+		            	 myRC.yield();
+		             }	       
+		   }catch(Exception e) {
+	         System.out.println("caught exception:");
+	         e.printStackTrace();
+	     }
+	     }  
+	 }
+	 
+	 
+	 protected void archonRun(int rounds) throws GameActionException{
+
+	     for(int i=0;i<rounds;i++){
+		   try{
+				 
+	 		   MapLocation enemy = enemyLocation();
+			   
+	 		   		if (!(enemy==null) && myRC.getLocation().distanceSquaredTo(enemy) < 4){
+	 		   				waitUntilMovementIdle();
+	 		   				if(!myRC.getDirection().equals(myRC.getLocation().directionTo(enemy).opposite()) 
+	 		   						&& !myRC.getLocation().directionTo(enemy).opposite().equals(Direction.OMNI)){
+	 		   					myRC.setDirection(myRC.getLocation().directionTo(enemy).opposite());
+	 		   					myRC.yield();
+	 		   					waitUntilMovementIdle();
+	 		   					if(myRC.canMove(myRC.getDirection())){
+	 		   						myRC.moveForward();
+	 		   					}
+	 		   				}
+	 		   				
+	 		   		}else{
+
+		             if(myRC.isMovementActive()) {
+		                myRC.yield();
+		             } else {		            	 
+		            	 if(myRC.canMove(myRC.getDirection()) && !(generator.nextInt(20)==1))
+		            	 {
+		            		 myRC.moveForward();
+		            	 } else 
+		            	 {
+		            		 myRC.setDirection(myRC.getDirection().rotateRight());
+		            	 }
+		            	 myRC.yield();
+		             }	 
+	 		   		}
+		             transferEnergon();
+		   }catch(Exception e) {
+	         System.out.println("caught exception:");
+	         e.printStackTrace();
+	     }
+	     }  
+	 }
+	 
+	 
+	 
+	 
+	 protected void patrol(int rounds) throws GameActionException{
+		 MapLocation archon = followArchon();
+		 waitUntilMovementIdle();
+		 if(!myRC.getDirection().equals(myRC.getLocation().directionTo(archon).opposite()) 
+				 && !(myRC.getLocation().directionTo(archon).opposite().equals(Direction.OMNI))
+				 && !(myRC.getLocation().directionTo(archon).opposite().equals(Direction.NONE))){
+			 myRC.setDirection(myRC.getLocation().directionTo(archon).opposite());
+			 myRC.yield();
+		 }
+         waitUntilMovementIdle();
+		 
 	     for(int i=0;i<rounds;i++){
 		   try{
 		             if(myRC.isMovementActive()) {
@@ -48,6 +138,22 @@ public abstract class AbstractRobot {
 	     }
 	     }  
 	 }
+	 
+	 
+	 protected MapLocation followArchon(){
+		 MapLocation[] archons = myRC.senseAlliedArchons();
+		 int minLen = 9999;
+		 MapLocation myArchon = null;
+		 for(MapLocation archon : archons){
+			 if(minLen>myRC.getLocation().distanceSquaredTo(archon)){
+				 minLen=myRC.getLocation().distanceSquaredTo(archon);
+				 myArchon=archon;
+			 }
+		 }
+		 return myArchon;
+		 
+	 }
+	 
 	 
 	 public MapLocation findFlux() throws GameActionException {
 		 
@@ -148,36 +254,57 @@ public abstract class AbstractRobot {
 	protected void sendMessage(int i) throws GameActionException{
 	        Message msgout;
 	    	msgout = new Message();
-	        msgout.strings = new String[1];
+	        msgout.strings = new String[2];
 	        msgout.locations = new MapLocation[1];
 	        switch(i){
 	            case 0:
-	            	msgout.strings[0]="MQ_WORK";
+	            	msgout.strings[0]=myRC.getTeam().toString();
+	            	msgout.strings[1]="MQ_WORK";
 	                break;
 	            case 1:
-	                msgout.strings[0]="MQ_DEFENSE";
+	            	msgout.strings[0]=myRC.getTeam().toString();
+	                msgout.strings[1]="MQ_DEFENSE";
 	                msgout.locations[0] = enemyLocation();
 	                break;
 	            case 2:
-	            	msgout.strings[0]="MQ_ATTACK";
+	            	msgout.strings[0]=myRC.getTeam().toString();
+	            	msgout.strings[1]="MQ_ATTACK";
 	                msgout.locations[0] = enemyLocation();
 	                break;
 	            case 3:
-	            	msgout.strings[0]="MQ_NEED_HELP";
+	            	msgout.strings[0]=myRC.getTeam().toString();
+	            	msgout.strings[1]="MQ_NEED_HELP";
 	                msgout.locations[0] = myRC.getLocation();
 	                break;
 	            case 4:
-	            	msgout.strings[0]="MQ_FOLLOW";
+	            	msgout.strings[0]=myRC.getTeam().toString();
+	            	msgout.strings[1]="MQ_FOLLOW";
 	            	break;
 	            case 5:
-	            	msgout.strings[0]="MQ_PATROL";
+	            	msgout.strings[0]=myRC.getTeam().toString();
+	            	msgout.strings[1]="MQ_PATROL";
 	            	break;
 	        }
 		           	 myRC.broadcast(msgout);
 		           	 myRC.yield();
-
 	    }
 	 
+	
+	protected boolean ourMessage(Message msg){
+		return  (!(msg.strings==null)
+				 && (msg.strings.length == 2)
+				 && !(msg.strings[0] == null)
+				 && !(msg.strings[1] == null)
+				 && msg.strings[0].equals(myRC.getTeam().toString())
+				 && (msg.strings[1] == "MQ_WORK" ||
+					 msg.strings[1] == "MQ_DEFENSE" ||
+					 msg.strings[1] == "MQ_ATTACK" ||
+					 msg.strings[1] == "MQ_NEED_HELP" ||
+					 msg.strings[1] == "MQ_FOLLOW" ||
+					 msg.strings[1] == "MQ_PATROL")); 
+					 
+	}
+	
 	 protected void goNear(MapLocation dest){
 
 	      boolean onDest = false;
@@ -255,16 +382,37 @@ public abstract class AbstractRobot {
 
 	   }
 	 
+   protected int numberOfNearbyRobots (RobotType typeOfRobot) throws GameActionException{
+	   myRC.yield();
+   		Robot[] NearbyRobots;
+       	NearbyRobots = myRC.senseNearbyGroundRobots();
+       	int count = 0;
+	    for (Robot robot : NearbyRobots){
+	    	   if(myRC.canSenseObject(robot)){
+	    		   RobotInfo robotInfo = myRC.senseRobotInfo(robot);
+	    			   if (robotInfo.team.equals(myRC.getTeam()) && robotInfo.type.equals(typeOfRobot)){
+	    				   count++;
+	    			   }
+	    		   }
+	    	   }
+	    return count;
+   }
    
-   protected double min (double a, double b){
-	   if (a < b) 
-		   {
-			return a;   
-		   } else {
-			   return b;
-		   } 
-	   } 
-	   
+   protected int numberOfAirRobots (RobotType typeOfRobot) throws GameActionException{
+  		Robot[] NearbyRobots;
+      	NearbyRobots = myRC.senseNearbyAirRobots();
+      	int count = 0;
+	    for (Robot robot : NearbyRobots){
+	    	   if(myRC.canSenseObject(robot)){
+	    		   RobotInfo robotInfo = myRC.senseRobotInfo(robot);
+	    			   if (robotInfo.team.equals(myRC.getTeam()) && robotInfo.type.equals(typeOfRobot)){
+	    				   count++;
+	    			   }
+	    		   }
+	    	   }
+	    return count;
+  }
+   
 	   
    protected void transferEnergon() throws GameActionException {
 	   myRC.yield();
@@ -284,7 +432,26 @@ public abstract class AbstractRobot {
 			}
 		}
   }
-	
+   protected void transferToArchon() throws GameActionException {
+	   myRC.yield();
+		for (Robot robot : myRC.senseNearbyAirRobots()) {
+			if (myRC.canSenseObject(robot)){
+				RobotInfo robotInfo = myRC.senseRobotInfo(robot);
+
+				if (robotInfo.team == myRC.getTeam()) {
+					MapLocation robotLoc = robotInfo.location;
+
+					if ((myRC.getLocation().isAdjacentTo(robotLoc))&&(3*robotInfo.maxEnergon > 4*robotInfo.energonLevel) && !(myRC.senseAirRobotAtLocation(robotLoc).equals(null))){
+						myRC.transferEnergon(Math.max(Math.min(robotInfo.maxEnergon-robotInfo.eventualEnergon, myRC.getEnergonLevel()/2),0), robotLoc, RobotLevel.IN_AIR);
+						myRC.yield();
+						break;
+					}
+				}
+			}
+		}
+  }
+   
+   
 
    protected boolean checkEnemy() throws GameActionException{
   	Robot[] groundRobots = myRC.senseNearbyGroundRobots();
@@ -321,7 +488,11 @@ public abstract class AbstractRobot {
     				if (minLen > myRC.getLocation().distanceSquaredTo(robotInfo.location)){
    	    					nearestEnemy = robotInfo;
    	    					minLen = myRC.getLocation().distanceSquaredTo(robotInfo.location);
-    				}   	    				
+    				}
+    				if (myRC.getLocation().add(myRC.getDirection()).equals(robotInfo.location)){
+    					nearestEnemy = robotInfo;
+    					return nearestEnemy;
+    				}
     			}
     		}
 		for (Robot robot : airRobots){
@@ -330,6 +501,10 @@ public abstract class AbstractRobot {
     				if (minLen > myRC.getLocation().distanceSquaredTo(robotInfo.location)){
 	    					nearestEnemy = robotInfo;
 	    					minLen = myRC.getLocation().distanceSquaredTo(robotInfo.location);
+    				}
+    				if (myRC.getLocation().add(myRC.getDirection()).equals(robotInfo.location)){
+    					nearestEnemy = robotInfo;
+    					return nearestEnemy;
     				}
 			}
 		}	

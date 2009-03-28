@@ -3,7 +3,6 @@ package madqteam;
 
 import battlecode.common.*;
 import madqteam.AbstractRobot;
-//import madqteam.AbstractRobot.RobotState;
 import madqteam.AbstractRobot.RobotState;
 
 
@@ -14,7 +13,7 @@ public class SoldierPlayer extends AbstractRobot {
  public SoldierPlayer(RobotController rc) {
 	 super(rc);
      myRC = rc;
-     state = RobotState.SOLDIER_FOLLOW;
+     state = RobotState.SOLDIER_FIND_FLUX;
  }
  
  
@@ -35,38 +34,31 @@ public class SoldierPlayer extends AbstractRobot {
 		return;
 	}
  
-
- protected MapLocation followArchon(){
-	 MapLocation[] archons = myRC.senseAlliedArchons();
-	 int minLen = 9999;
-	 MapLocation myArchon = null;
-	 for(MapLocation archon : archons){
-		 if(minLen>myRC.getLocation().distanceSquaredTo(archon)){
-			 minLen=myRC.getLocation().distanceSquaredTo(archon);
-			 myArchon=archon;
-		 }
-	 }
-	 return myArchon;
-	 
- }
  
  protected void follow() throws GameActionException{
 	  MapLocation archon = followArchon();
 	  Message msg=myRC.getNextMessage();
-	  if (!(msg==null) && !(msg.strings==null)){
-		  if (msg.strings[0] == "MQ_ATTACK"){
+	  if (!(msg==null) && !(msg.strings==null) && msg.strings.length == 2){
+		  if (msg.strings[1] == "MQ_ATTACK"){
 			  state = RobotState.SOLDIER_ATTACK;
 			  return;
 		  }
-		  if (msg.strings[0] == "MQ_DEFENSE"){
+		  if (msg.strings[1] == "MQ_DEFENSE"){
 			  goNear(archon);
 			  state = RobotState.SOLDIER_DEFENSE;
 			  return;
 		  }
-	/*	  if (msg.strings[0] == "MQ_PATROL"){
-			  state = RobotState.SOLDIER_PATROL;
+		  if (msg.strings[1] == "MQ_NEED_HELP"){
+			  goNear(msg.locations[0]);
+			  state = RobotState.SOLDIER_ATTACK;
 			  return;
-		  }*/
+		  }
+		  if (!ourMessage(msg)){
+			  sendMessage(3);
+			  state = RobotState.SOLDIER_ATTACK;
+			  return;
+		  }
+
 	  }
   	  if (checkEnemy()){
 		  goNear(archon);
@@ -75,30 +67,72 @@ public class SoldierPlayer extends AbstractRobot {
   	  }
 	
 	  if (!(archon == null)){
-		  randomRun(7);
-		  goNear(archon);		  
+		//  patrol(2);
+		  goDirection(myRC.getLocation().directionTo(archon));
 	  }
-	 
+	  transferEnergon(); 
  }
+ 
+ protected void begin() throws GameActionException{
+	  MapLocation archon = followArchon();
+	  Message msg=myRC.getNextMessage();
+	  if (!(msg==null) && !(msg.strings==null) && msg.strings.length == 2){
+		  if (msg.strings[1] == "MQ_ATTACK"){
+			  state = RobotState.SOLDIER_ATTACK;
+			  return;
+		  }
+		  if (msg.strings[1] == "MQ_DEFENSE"){
+			  goNear(archon);
+			  state = RobotState.SOLDIER_DEFENSE;
+			  return;
+		  }
+		  if (msg.strings[1] == "MQ_NEED_HELP"){
+			  goNear(msg.locations[0]);
+			  state = RobotState.SOLDIER_ATTACK;
+			  return;
+		  }
+		  if (msg.strings[1] == "MQ_FOLLOW"){
+			  state = RobotState.SOLDIER_FOLLOW;
+			  return;
+		  }
+		  if (!ourMessage(msg)){
+			  sendMessage(3);
+			  state = RobotState.SOLDIER_ATTACK;
+			  return;
+		  }
+
+	  }
+	
+	  if (!(archon == null)){
+		  
+	 	  if (checkEnemy()){
+			  goNear(archon);
+			  state = RobotState.SOLDIER_DEFENSE;
+			return;
+	 	  }
+	 	  
+		  randomRun(4);
+		  goNear(archon);	
+	  }
+	  transferEnergon();  
+}
+ 
  
  
   protected void defense() throws GameActionException{
 	  waitUntilAttackIdle();
 	  Message msg=myRC.getNextMessage();
 	  MapLocation nearestEnemyLoc = null;
-	  if (!(msg==null) && !(msg.strings==null)){
-		  if (msg.strings[0] == "MQ_ATTACK"){
+	  if (!(msg==null) && !(msg.strings==null) && msg.strings.length == 2){
+		  if (msg.strings[1] == "MQ_ATTACK"){
 			  state = RobotState.SOLDIER_ATTACK;
 			  return;
 		  }
-	//	  if (msg.strings[0] == "WORK"){
-	//	  	 myRC.suicide();
-	//	  }
-		  if (msg.strings[0] == "MQ_DEFENSE"){
+		  if (msg.strings[1] == "MQ_DEFENSE"){
   			  nearestEnemyLoc = msg.locations[0];
 		  }
-		  if (msg.strings[0] == "MQ_PATROL"){
-			  state = RobotState.SOLDIER_PATROL;
+		  if (msg.strings[1] == "MQ_FOLLOW"){
+			  state = RobotState.SOLDIER_FOLLOW;
 			  return;
 		  }
 	  }
@@ -123,8 +157,9 @@ public class SoldierPlayer extends AbstractRobot {
 			  	}
 		  }
 	  }
+
+		  transferEnergon(); 
 	  
-	  transferEnergon();  
   }
   
 /*  
@@ -157,7 +192,7 @@ public class SoldierPlayer extends AbstractRobot {
   */
   
   
-  protected void fight() throws GameActionException{
+  protected void combatMode() throws GameActionException{
 
 	  MapLocation nearestEnemyLoc = null;
 	  
@@ -172,7 +207,7 @@ public class SoldierPlayer extends AbstractRobot {
 				  myRC.yield();
 			  }else{
 				  attack(nearestEnemy);
-				  if (generator.nextInt(50)==1){
+				  if (generator.nextInt(10)==1){
 					   sendMessage(3);
 				  }
 			  }
@@ -187,21 +222,22 @@ public class SoldierPlayer extends AbstractRobot {
 	  
 	  	  Message msg=myRC.getNextMessage();
 	  
-	  	  if (!(msg==null) && !(msg.strings==null)){
-	  		  if (msg.strings[0] == "MQ_DEFENSE"){
+	  	  if (!(msg==null) && !(msg.strings==null) && msg.strings.length == 2){
+	  		  if (msg.strings[1] == "MQ_DEFENSE"){
 	  			  state = RobotState.SOLDIER_DEFENSE;
 	  			  return;
 	  		  }
-	  		  if (msg.strings[0] == "MQ_PATROL"){
-	  			  state = RobotState.SOLDIER_PATROL;
+	  		  if (msg.strings[1] == "MQ_FOLLOW"){
+	  			  state = RobotState.SOLDIER_FOLLOW;
 	  			  return;
 	  		  }
-	  		  if (msg.strings[0] == "MQ_ATTACK"){
+	  		  if (msg.strings[1] == "MQ_ATTACK"){
 	  			  nearestEnemyLoc = msg.locations[0];
 	  		  }
-	  		  if (msg.strings[0] == "MQ_NEED_HELP"){
-	  			  nearestEnemyLoc = msg.locations[0];
-	  		  }
+	  		 /* if (msg.strings[1] == "MQ_NEED_HELP"){
+	  			  goNear(msg.locations[0]);
+	  			  return;
+	  		  }*/
 	  	  }
 	  	  myRC.yield();
 	  	  if (!(nearestEnemyLoc == null)){
@@ -214,7 +250,7 @@ public class SoldierPlayer extends AbstractRobot {
 	  				  nearestEnemy = enemyInfo();
 	  				  if (!(nearestEnemy == null)){
 	  					  attack(nearestEnemy);
-	  					  if (generator.nextInt(150)==1){
+	  					  if (generator.nextInt(50)==1){
 	  						  sendMessage(3);
 	  					  }
 	  				  }
@@ -228,8 +264,94 @@ public class SoldierPlayer extends AbstractRobot {
 	  }
 	  transferEnergon();  
   }
+  
+  
+  private void findFLux(){   	
+
+       try{
+      	
+          if (myRC.senseDirectionToUnownedFluxDeposit().equals(Direction.NONE))
+          {
+          	state = RobotState.SOLDIER_FOLLOW;
+            return;
+          }
+      	 
+		  myRC.yield();
+		  transferEnergon();
+	       
+	       
+	     if (checkEnemy()){
+	          	state = RobotState.SOLDIER_ATTACK;
+	            return;
+		 }
+	     	
+		  Message msg=myRC.getNextMessage();
+			  
+		  if (!(msg==null)){
+			  if (msg.strings[0] == "MQ_ATTACK"){
+				  state = RobotState.SOLDIER_ATTACK;
+				  return;
+			  }
+		  }
+	     		     
+
+
+          while (myRC.isMovementActive())
+          {
+          	myRC.yield();
+          }
+
+
+          if (myRC.canMove(myRC.getDirection())){
+          	 if(myRC.getDirection().equals(myRC.senseDirectionToUnownedFluxDeposit()))
+          	 {
+          		 waitUntilMovementIdle();
+          		 myRC.moveForward();
+          		 myRC.yield();
+          	 } else
+          	 {
+          		 waitUntilMovementIdle();
+          		 if(!myRC.senseDirectionToUnownedFluxDeposit().equals(Direction.OMNI) && !myRC.senseDirectionToUnownedFluxDeposit().equals(Direction.NONE)){
+          			 myRC.setDirection(myRC.senseDirectionToUnownedFluxDeposit());
+          			 myRC.yield();
+          		 }
+          	 }
+     	 	}
+
+           if (!myRC.canMove(myRC.getDirection())){
+               if(myRC.getDirection().equals(myRC.senseDirectionToUnownedFluxDeposit()))
+          	 {
+          		 randomRun(5);
+          	 } else
+          	 {
+          		 waitUntilMovementIdle();
+          		 if(!myRC.senseDirectionToUnownedFluxDeposit().equals(Direction.OMNI) && !myRC.senseDirectionToUnownedFluxDeposit().equals(Direction.NONE)){
+          			 myRC.setDirection(myRC.senseDirectionToUnownedFluxDeposit());
+          			 myRC.yield();
+          		 }
+          	 }
+          	 if(!myRC.getDirection().equals(myRC.senseDirectionToUnownedFluxDeposit())){
+          		 waitUntilMovementIdle();
+          		 if(!myRC.senseDirectionToUnownedFluxDeposit().equals(Direction.OMNI) && !myRC.senseDirectionToUnownedFluxDeposit().equals(Direction.NONE)){
+          			 myRC.setDirection(myRC.senseDirectionToUnownedFluxDeposit());
+          			 myRC.yield();
+          		 }
+          	 }
+           }
+
+
+       }catch(Exception e) {
+          System.out.println("caught exception:");
+          e.printStackTrace();
+       }
+    }
+  
+  
+  
+  
  
    public void run() {
+	   updateStatus();
 	   switch (state) {
   		case SOLDIER_DEFENSE:
 			   	try {
@@ -240,7 +362,7 @@ public class SoldierPlayer extends AbstractRobot {
 			   	break;
   		case SOLDIER_ATTACK:
   				try {
-  					fight();
+  					combatMode();
   				} catch (GameActionException e) {
   					e.printStackTrace();
   				}
@@ -254,6 +376,12 @@ public class SoldierPlayer extends AbstractRobot {
 				}
 				myRC.yield();
 				break;*/
+  		case SOLDIER_FIND_FLUX:
+			try {
+				findFlux();
+			} catch (GameActionException e) {
+				e.printStackTrace();
+			}
   		case SOLDIER_FOLLOW:
 				try {
 					follow();
@@ -262,6 +390,14 @@ public class SoldierPlayer extends AbstractRobot {
 				}
 				myRC.yield();
 				break;
+  		case SOLDIER_BEGIN:
+			try {
+				begin();
+			} catch (GameActionException e) {
+				e.printStackTrace();
+			}
+			myRC.yield();
+			break;
 	   }
   }
 }

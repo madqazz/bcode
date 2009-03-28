@@ -10,7 +10,6 @@ import madqteam.AbstractRobot.RobotState;
 public class ArchonPlayer extends AbstractRobot {
 
    private final RobotController myRC;
-   private int workers =0;
    
 
    public ArchonPlayer(RobotController rc) {
@@ -20,42 +19,55 @@ public class ArchonPlayer extends AbstractRobot {
    }
     
     private void findFLux(){   	
+    	int archonNumber=0, soldierNumber=0;
      
          try{
- 
-        /*	 
-       	   Robot[] NearbyRobots = myRC.senseNearbyGroundRobots();
-     	   int soldierNumber = 0;
-
-     	   for (Robot robot : NearbyRobots){
-    		   if(myRC.canSenseObject(robot)){
-    			   RobotInfo robotInfo = myRC.senseRobotInfo(robot);
-    			   if (robotInfo.team.equals(myRC.getTeam()) && robotInfo.type.equals(RobotType.SOLDIER)){
-    				   soldierNumber++;
-    			   }
-    		   }
-    	   }
-    	   
-           if(soldierNumber < 1){
-        	   spawnSoldier();
-        	   sendMessage(4);
-           }
-    	   transferEnergon();
-        	*/
-        	 
-
-            if (myRC.senseDirectionToUnownedFluxDeposit().equals(Direction.OMNI))
+         	 
+        	
+            if (myRC.senseDirectionToUnownedFluxDeposit().equals(Direction.NONE))
             {
-            	state = RobotState.ARCHON_ON_FLUX;
-        //    	sendMessage(2);
+            	state = RobotState.ARCHON_TAKE_FLUX;
                 return;
             }
-            
-        	if (checkEnemy()){
-    			state=RobotState.ARCHON_ATTACK;
-    			return;
-        	}
-            
+        	 
+		  myRC.yield();
+		  transferEnergon();
+       	
+        	
+ 		   soldierNumber = numberOfNearbyRobots(RobotType.SOLDIER);
+		   archonNumber = numberOfAirRobots(RobotType.ARCHON)+1;
+		   
+	       if(soldierNumber < 3*archonNumber){
+	    	   if(spawnSoldier()){
+	    		  // for(int i=1;i<10;i++){
+	    			   myRC.yield();
+	    		 //  }
+	    	   }
+	    	  // transferEnergon();
+	    	   //sendMessage(2);
+	       }
+
+	       transferEnergon();
+	       
+	       
+	     	if (checkEnemy()){
+    			//state=RobotState.ARCHON_ATTACK;
+    			//return;
+	    		   spawnSoldier();
+	    		  // transferEnergon();
+	    		  // for(int i=1;i<5;i++){
+	    		//	   myRC.yield();
+	    			   transferEnergon();
+	    				sendMessage(2);
+	    				  
+	    		//   }
+		   }
+	     	
+	    	if (checkEnemy()){
+	    		archonRun(5);
+	    		return;
+	    	}
+	     
 
 
             while (myRC.isMovementActive())
@@ -84,7 +96,7 @@ public class ArchonPlayer extends AbstractRobot {
              if (!myRC.canMove(myRC.getDirection())){
                  if(myRC.getDirection().equals(myRC.senseDirectionToUnownedFluxDeposit()))
             	 {
-            		 randomRun(50);
+            		 archonRun(10);
                 	 //myRC.yield();
             	 } else
             	 {
@@ -111,24 +123,99 @@ public class ArchonPlayer extends AbstractRobot {
             e.printStackTrace();
          }
       }
+    
+    
+    private void takeFLux(){   	
+    	int archonNumber=0, soldierNumber=0;
+     
+         try{
+         	 
+        	
+            if (myRC.senseDirectionToOwnedFluxDeposit().equals(Direction.NONE))
+            {
+            	state = RobotState.ARCHON_FIND_FLUX;
+                return;
+            }
+            
+            if (myRC.senseDirectionToOwnedFluxDeposit().equals(Direction.OMNI))
+            {
+            	state = RobotState.ARCHON_ON_FLUX;
+                return;
+            }
+        	 
+		  myRC.yield();
+     
+
+
+            while (myRC.isMovementActive())
+            {
+            	myRC.yield();
+            }
+
+
+            if (myRC.canMove(myRC.getDirection()))
+       	 	{
+            	 if(myRC.getDirection().equals(myRC.senseDirectionToOwnedFluxDeposit()))
+            	 {
+            		 waitUntilMovementIdle();
+            		 myRC.moveForward();
+            		 myRC.yield();
+            	 } else
+            	 {
+            		 waitUntilMovementIdle();
+            		 if(!myRC.senseDirectionToOwnedFluxDeposit().equals(Direction.OMNI) && !myRC.senseDirectionToOwnedFluxDeposit().equals(Direction.NONE)){
+            			 myRC.setDirection(myRC.senseDirectionToOwnedFluxDeposit());
+            			 myRC.yield();
+            		 }
+            	 }
+       	 	}
+
+             if (!myRC.canMove(myRC.getDirection())){
+                 if(myRC.getDirection().equals(myRC.senseDirectionToOwnedFluxDeposit()))
+            	 {
+                	 waitUntilMovementIdle();
+            		 if(!myRC.senseDirectionToOwnedFluxDeposit().equals(Direction.OMNI) && !myRC.senseDirectionToOwnedFluxDeposit().equals(Direction.NONE)){
+            			 myRC.setDirection(myRC.senseDirectionToOwnedFluxDeposit().opposite());
+            			 myRC.yield();
+            		 }
+            		 randomRun(80);
+            	 } else
+            	 {
+            		 waitUntilMovementIdle();
+            		 if(!myRC.senseDirectionToOwnedFluxDeposit().equals(Direction.OMNI) && !myRC.senseDirectionToOwnedFluxDeposit().equals(Direction.NONE)){
+            			 myRC.setDirection(myRC.senseDirectionToOwnedFluxDeposit());
+            			 myRC.yield();
+            		 }
+            	 }
+             }
+
+
+            myRC.yield();
+
+         }catch(Exception e) {
+            System.out.println("caught exception:");
+            e.printStackTrace();
+         }
+      }
+   
+    
    
     
     protected void onFlux() throws GameActionException{
 
-    	Robot[] NearbyRobots;
     	Message msg = myRC.getNextMessage();
     	int workerNumber = 0, soldierNumber = 0;
 
-   	
-    	if (!(msg==null) && !(msg.strings==null)){
-    		if (msg.strings[0]=="ARCHON_TO_DEFENSE"){
-    			state=RobotState.ARCHON_DEFENSE;
-    			return;
-    		}
-    	  	if (msg.strings[0] == "ENEMY_SPOTTED"){
+   	/*
+    	if (!(msg==null) && !(msg.strings==null) && msg.strings.length == 2){
+    	  	if (msg.strings[1] == "MQ_NEED_HELP"){
     	   		state=RobotState.ARCHON_DEFENSE;
         		return;
     	  	  }
+    	  	if (!ourMessage(msg)){
+    	   		state=RobotState.ARCHON_DEFENSE;
+        		return;
+    	  	}
     	}
     	
     	if (checkEnemy()){
@@ -136,71 +223,63 @@ public class ArchonPlayer extends AbstractRobot {
 			return;
     	}
     	
-        NearbyRobots = myRC.senseNearbyGroundRobots();
-  	    for (Robot robot : NearbyRobots){
-    	   if(myRC.canSenseObject(robot)){
-    		   RobotInfo robotInfo = myRC.senseRobotInfo(robot);
-    			   if (robotInfo.team.equals(myRC.getTeam()) && robotInfo.type.equals(RobotType.SOLDIER)){
-    				   soldierNumber++;
-    			   }
-    			   if (robotInfo.team.equals(myRC.getTeam()) && robotInfo.type.equals(RobotType.WORKER)){
-    				   workerNumber++;
-    			   }
-    		   }
-    	   }
-	     if(soldierNumber < 3){
+	   soldierNumber = numberOfNearbyRobots(RobotType.SOLDIER);*/
+	   workerNumber = numberOfNearbyRobots(RobotType.WORKER);
+	   /*
+	     if(soldierNumber < 1){
 	    	   spawnSoldier();
 	    	   transferEnergon();
 	    	   sendMessage(4);
 	     }
-	     
+	     */
 		 transferEnergon();
-	     if(workerNumber < 5){
+	     if(workerNumber < 4){
 	       spawn();
 	       transferEnergon();
 	      }
 		  transferEnergon();
-        }
- 
+       /* 
+	   if(generator.nextInt(20)==1){
+		   sendMessage(4);
+	   }
+	   */
+    }
     
     
    private void attack() throws GameActionException{
- 	       Robot[] nearbyRobots = myRC.senseNearbyGroundRobots();
 		   int soldierNumber = 0;
+		   int archonNumber = 0; 
 		   
 		   if(!checkEnemy() && generator.nextInt(15)==1){
 			   sendMessage(0);
 			   state=RobotState.ARCHON_FIND_FLUX;
 			   return;
-		   }else{
-			   if (generator.nextInt(50)==1){
-				   sendMessage(2);
-			   }
-		   }
-		   transferEnergon();  
-
-		   for (Robot robot : nearbyRobots){
-			   if(myRC.canSenseObject(robot)){
-				   RobotInfo robotInfo = myRC.senseRobotInfo(robot);
-				   if (robotInfo.team.equals(myRC.getTeam()) && robotInfo.type.equals(RobotType.SOLDIER)){
-					   soldierNumber++;
-				   }
-			   }
 		   }
 		   
-	       if(soldierNumber < 3){
+		   transferEnergon();  
+
+		   soldierNumber = numberOfNearbyRobots(RobotType.SOLDIER);
+		   archonNumber = numberOfAirRobots(RobotType.ARCHON)+1;
+		   
+	       if(soldierNumber < 3*archonNumber){
 	    	   spawnSoldier();
 	    	   transferEnergon();
+	    	   //sendMessage(2);
+	       }else{
+			   if(generator.nextInt(10)==1){
+				   sendMessage(2);
+			   }
 	       }
 		   transferEnergon();
+		  
       }
    
 
    
    private void defense() throws GameActionException{
-	   Robot[] NearbyRobots = myRC.senseNearbyGroundRobots();
+
 	   int soldierNumber = 0;	   
-	   if(!checkEnemy() && generator.nextInt(15)==1){
+	   if(!checkEnemy() && generator.nextInt(5)==1){
 		   sendMessage(0);
 		   state=RobotState.ARCHON_ON_FLUX;
 		   return;
@@ -211,14 +290,7 @@ public class ArchonPlayer extends AbstractRobot {
 	   }
 	   transferEnergon();  
 
-	   for (Robot robot : NearbyRobots){
-		   if(myRC.canSenseObject(robot)){
-			   RobotInfo robotInfo = myRC.senseRobotInfo(robot);
-			   if (robotInfo.team.equals(myRC.getTeam()) && robotInfo.type.equals(RobotType.SOLDIER)){
-				   soldierNumber++;
-			   }
-		   }
-	   }
+	   soldierNumber = numberOfNearbyRobots(RobotType.SOLDIER);
 	   
        if(soldierNumber < 3){
     	   spawnSoldier();
@@ -230,6 +302,7 @@ public class ArchonPlayer extends AbstractRobot {
 
 	private void spawn() throws GameActionException {
 
+		if(3*myRC.getEnergonLevel() > myRC.getMaxEnergonLevel()){
 		for (Direction dir : Direction.values()) {
 			if (!dir.equals(Direction.OMNI) && !dir.equals(Direction.NONE)) {
 				MapLocation loc = myRC.getLocation().add(dir);
@@ -254,24 +327,15 @@ public class ArchonPlayer extends AbstractRobot {
 			}
 		}
 	}
+	}
 }
 	
-/*	
-	private void buildSoldiers(int number) throws GameActionException{
-		int i=0;
-		while(i<number){
-			/*if (spawnSoldier()){
-				i++;
-			}		
-			waitUntilMovementIdle();
-			transferEnergon();
-		}
-	}
-	*/
 	
 	private boolean spawnSoldier() throws GameActionException {
 
+		
 		boolean done=false;
+		if(4*myRC.getEnergonLevel() > 3*myRC.getMaxEnergonLevel()){
 		while(!done){
 		for (Direction dir : Direction.values()) {
 			if (!dir.equals(Direction.OMNI) && !dir.equals(Direction.NONE)) {
@@ -299,16 +363,21 @@ public class ArchonPlayer extends AbstractRobot {
 			}
 		}
 		}
+		}
 		return done;
 }
 	
 
 
    public void run() {
+	   updateStatus();
 	   switch (state) {
 	   		case ARCHON_FIND_FLUX:
 				   	findFLux();
 				   	break;
+	   		case ARCHON_TAKE_FLUX:
+	   				takeFLux();
+	   				break;
 	   		case ARCHON_ON_FLUX:
 	   				try {
 	   					onFlux();
