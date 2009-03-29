@@ -34,18 +34,20 @@ public class ArchonPlayer extends AbstractRobot {
 		  transferEnergon();
        	
         	
- 		   soldierNumber = numberOfNearbyRobots(RobotType.SOLDIER);
-		   archonNumber = numberOfAirRobots(RobotType.ARCHON)+1;
+ 		   //soldierNumber = numberOfNearbyRobots(RobotType.SOLDIER);
+		   //archonNumber = numberOfAirRobots(RobotType.ARCHON)+1;
 		   
-	       if(soldierNumber < 3*archonNumber){
-	    	   if(spawnSoldier()){
+	       //if(soldierNumber < 3*archonNumber){
+		  if(2*myRC.getEnergonLevel() > myRC.getMaxEnergonLevel()){
+	    	   spawnSoldier();
+		  }
 	    		  // for(int i=1;i<10;i++){
-	    			   myRC.yield();
+	    		//	   myRC.yield();
 	    		 //  }
-	    	   }
+	    	//   }
 	    	  // transferEnergon();
 	    	   //sendMessage(2);
-	       }
+	       //}
 
 	       transferEnergon();
 	       

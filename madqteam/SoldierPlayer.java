@@ -327,14 +327,14 @@ public class SoldierPlayer extends AbstractRobot {
            if (!myRC.canMove(myRC.getDirection())){
                if(myRC.getDirection().equals(myRC.senseDirectionToUnownedFluxDeposit()))
           	 {
-          		 randomRun(5);
-          	 } else
-          	 {
-          		 waitUntilMovementIdle();
-          		 if(!myRC.senseDirectionToUnownedFluxDeposit().equals(Direction.OMNI) && !myRC.senseDirectionToUnownedFluxDeposit().equals(Direction.NONE)){
-          			 myRC.setDirection(myRC.senseDirectionToUnownedFluxDeposit());
+            	 while(!myRC.canMove(myRC.getDirection().rotateRight())){
+            		 waitUntilMovementIdle();
+          			 myRC.setDirection(myRC.getDirection().rotateRight());
           			 myRC.yield();
           		 }
+        		 waitUntilMovementIdle();
+      			 myRC.setDirection(myRC.getDirection().rotateRight());
+      			 myRC.yield();
           	 }
           	 if(!myRC.getDirection().equals(myRC.senseDirectionToUnownedFluxDeposit())){
           		 waitUntilMovementIdle();
@@ -344,6 +344,7 @@ public class SoldierPlayer extends AbstractRobot {
           		 }
           	 }
            }
+ 		  transferEnergon();
     }
   
   
