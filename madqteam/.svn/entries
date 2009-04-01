@@ -1,0 +1,52 @@
+8
+
+dir
+2
+https://svn.xp-dev.com/svn/madqazz-BCode-SiD/BattleCode%202009/teams/madqteam
+https://svn.xp-dev.com/svn/madqazz-BCode-SiD
+
+
+
+2009-03-15T22:11:26.466781Z
+2
+madqazz
+
+
+svn:special svn:externals svn:needs-lock
+
+RobotPlayer.java
+file
+
+
+
+
+2009-03-15T15:14:27.000000Z
+ebaf39bf6ad2f4ec7f7ab683bb6ac22c
+2009-03-15T22:11:26.466781Z
+2
+madqazz
+
+WorkerPlayer.java
+file
+6
+
+
+
+2009-03-18T23:36:40.000000Z
+b6bf7c5dce445c372df689dc659fa5cd
+2009-03-18T23:40:29.809571Z
+6
+madqazz
+
+ArchonPlayer.java
+file
+6
+
+
+
+2009-03-18T23:40:12.000000Z
+f6d3bfb9c3348ed336a76cb77faf4776
+2009-03-18T23:40:29.809571Z
+6
+madqazz
+
